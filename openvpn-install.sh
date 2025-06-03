@@ -712,7 +712,7 @@ function installOpenVPN() {
 			fi
 			# Ubuntu > 16.04 and Debian > 8 have OpenVPN >= 2.4 without the need of a third party repository.
 			apt-get install -y openvpn iptables openssl wget ca-certificates curl
-		elif [[ $OS == 'centos' ]]; then
+		elif [[ $OS == 'centos' || $OS == 'tencentos' ]]; then
 			yum install -y epel-release
 			yum install -y openvpn iptables openssl wget ca-certificates curl tar 'policycoreutils-python*'
 		elif [[ $OS == 'oracle' ]]; then
@@ -746,7 +746,9 @@ function installOpenVPN() {
 	# Install the latest version of easy-rsa from source, if not already installed.
 	if [[ ! -d /etc/openvpn/easy-rsa/ ]]; then
 		local version="3.1.2"
-		wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
+		if [ ! -e ~/easy-rsa.tgz ]; then
+			wget -O ~/easy-rsa.tgz https://github.com/OpenVPN/easy-rsa/releases/download/v${version}/EasyRSA-${version}.tgz
+		fi
 		mkdir -p /etc/openvpn/easy-rsa
 		tar xzf ~/easy-rsa.tgz --strip-components=1 --no-same-owner --directory /etc/openvpn/easy-rsa
 		rm -f ~/easy-rsa.tgz
@@ -963,7 +965,7 @@ verb 3" >>/etc/openvpn/server.conf
 	fi
 
 	# Finally, restart and enable OpenVPN
-	if [[ $OS == 'arch' || $OS == 'fedora' || $OS == 'centos' || $OS == 'oracle' || $OS == 'amzn2023' ]]; then
+	if [[ $OS == 'arch' || $OS == 'fedora' || $OS == 'centos' || $OS == 'oracle' || $OS == 'amzn2023' || $OS == 'tencentos' ]]; then
 		# Don't modify package-provided service
 		cp /usr/lib/systemd/system/openvpn-server@.service /etc/systemd/system/openvpn-server@.service
 
@@ -1248,7 +1250,7 @@ function removeUnbound() {
 			apt-get remove --purge -y unbound
 		elif [[ $OS == 'arch' ]]; then
 			pacman --noconfirm -R unbound
-		elif [[ $OS =~ (centos|amzn|oracle) ]]; then
+		elif [[ $OS =~ (centos|amzn|oracle|tencentos) ]]; then
 			yum remove -y unbound
 		elif [[ $OS == 'fedora' ]]; then
 			dnf remove -y unbound
@@ -1274,7 +1276,7 @@ function removeOpenVPN() {
 		PROTOCOL=$(grep '^proto ' /etc/openvpn/server.conf | cut -d " " -f 2)
 
 		# Stop OpenVPN
-		if [[ $OS =~ (fedora|arch|centos|oracle) ]]; then
+		if [[ $OS =~ (fedora|arch|centos|oracle|tencentos) ]]; then
 			systemctl disable openvpn-server@server
 			systemctl stop openvpn-server@server
 			# Remove customised service
@@ -1315,7 +1317,7 @@ function removeOpenVPN() {
 			fi
 		elif [[ $OS == 'arch' ]]; then
 			pacman --noconfirm -R openvpn
-		elif [[ $OS =~ (centos|amzn|oracle) ]]; then
+		elif [[ $OS =~ (centos|amzn|oracle|tencentos) ]]; then
 			yum remove -y openvpn
 		elif [[ $OS == 'fedora' ]]; then
 			dnf remove -y openvpn
